@@ -14,6 +14,7 @@ function ChatList() {
         <Header />
         <button onClick={() => navigate('/chat')} className="button">
           <img src={profilepic} className="profilepic" alt="logo" />
+          <p>Their Name</p>
           Enter Chat
         </button>
       </div>
