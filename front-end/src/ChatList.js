@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom'
 import "./ChatList.css"
-import Button from "./Button"
 import Header from "./Header"
+import profilepic from './ProfilePic.png';
+import logo from './logo.svg';
 
 function ChatList() {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ function ChatList() {
       <div className="ChatList">
         <Header />
         <button onClick={() => navigate('/chat')} className="button">
+          <img src={profilepic} className="profilepic" alt="logo" />
           Enter Chat
         </button>
       </div>
