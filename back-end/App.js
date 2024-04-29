@@ -206,61 +206,36 @@ app.post('/survey', (req, res) => {
 
 app.get('/matches', authenticateToken, async (req, res) => {
   try {
-    User.find()
-      .then(foundUser => {
-        if (!foundUser) return res.status(404).json({ message: "User not found" });
-
-        const foundOtherUser = [];
-        const matches = [];
-        var thisUser = new User({});
-
-        for (const user of foundUser) {
-          if (user._id && req.user.id) {
-            if (String(user._id) === req.user.id) {
-              //console.log(user.username);
-              thisUser = user;
-            }
-            else {
-              foundOtherUser.push(user);
-            }
-          }
-        }
-        keys = compat.createMatches(thisUser, foundOtherUser);
-        //console.log(keys);
-
-        for (const key of keys) {
-          for (const user of foundUser) {
-            if (user.username === key) {
-              matches.push(user);
-            }
-          }
-        }
-
+    User.find({}, 'username profile avatar')
+      .then(users => {
+        if (!users) return res.status(404).json({ message: "No users found" });
+        const matches = users.map(user => ({
+          username: user.username,
+          bio: user.profile.bio,
+          year: user.profile.year,
+          avatar: user.profile.avatar || 'defaultAvatar.png'
+        }));
         res.json(matches);
       })
-      .catch(err => {
-        console.log(err);
-        res.status(500).send('server error');
-      });
+      .catch(err => res.status(500).send('Server error'));
   } catch (err) {
-    console.log(err);
+    res.status(500).send('Server error');
   }
 });
 
 app.post('/matches', authenticateToken, async (req, res) => {
-  const username = req.body.username;
-  req.session.otheruser = username;
-  //console.log('the clicked user is', username)
-
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      console.error('User not found');
-      return res.status(404).json({ message: 'User not found.' });
-    }
-    res.json({ message: 'Profile updated successfully.' });
+    const user = await User.findOne({ username: req.body.username }, 'username profile avatar');
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    res.json({
+      message: 'User data retrieved successfully.',
+      userData: {
+        username: user.username,
+        bio: user.profile.bio,
+        avatar: user.profile.avatar || 'defaultAvatar.png'
+      }
+    });
   } catch (err) {
-    console.error("Error during profile update:", err);
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 });
@@ -460,18 +435,25 @@ app.get('/chatUser', authenticateToken, (req, res) => {
       });
 });
 
+// profile route
 app.get('/profile', authenticateToken, (req, res) => {
-  // Add 'year' to the list of fields to return
-  User.findById(req.user.id, 'username answers.year profile.bio imagePath')
+  User.findById(req.user.id, 'username profile')
     .then(user => {
-      if (!user) return res.status(404).json({ message: "User not found" });
-      res.json(user);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      // Now send the entire profile object which includes the avatar field
+      res.json({ 
+        username: user.username, 
+        profile: user.profile
+      });
     })
     .catch(err => {
       console.error(err);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Internal server error", error: err.message });
     });
 });
+
 
 app.get('/retake', authenticateToken, async(req, res) => {
   User.findById(req.user.id, 'profile.name answers.gender answers.year answers.pets ' + 
@@ -533,53 +515,54 @@ app.post('/editprofile', authenticateToken, async (req, res) => {
   console.log("Received update request for user:", req.user.id);
   console.log("Request data:", req.body);
 
+  // Map avatar names to file names
+  const avatarMap = {
+      dog: 'avatar1.png',
+      cat: 'avatar2.png',
+      alligator: 'avatar3.png',
+      owl: 'avatar4.png',
+      bunny: 'avatar5.png',
+  };
+
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      console.error('User not found');
-      return res.status(404).json({ message: 'User not found.' });
-    }
-
-    // If old_password is provided, verify it
-    if (req.body.old_password) {
-      const passwordIsValid = await bcrypt.compare(req.body.old_password, user.password);
-      if (!passwordIsValid) {
-        console.error('Old password does not match');
-        return res.status(400).json({ message: "Old password does not match." });
+      const user = await User.findById(req.user.id);
+      if (!user) {
+          console.error('User not found');
+          return res.status(404).json({ message: 'User not found.' });
       }
-    }
 
-    // If new_password is provided, hash it and update
-    if (req.body.new_password) {
-      const hashedPassword = await bcrypt.hash(req.body.new_password, 10);
-      user.password = hashedPassword;
-    }
+      // Verify old password if provided
+      if (req.body.old_password && !(await bcrypt.compare(req.body.old_password, user.password))) {
+          console.error('Old password does not match');
+          return res.status(400).json({ message: "Old password does not match." });
+      }
 
-    // Update profile fields if provided
-    user.profile = {
-      ...user.profile,
-      bio: req.body.bio || user.profile.bio,
-      year: req.body.year || user.profile.year,
-    };
+      // Hash new password and update if provided
+      if (req.body.new_password) {
+          const hashedPassword = await bcrypt.hash(req.body.new_password, 10);
+          user.password = hashedPassword;
+      }
 
-    // Update username if provided
-    user.username = req.body.username || user.username;
+      // Update profile fields if provided
+      user.profile.bio = req.body.bio || user.profile.bio;
+      user.profile.year = req.body.year || user.profile.year;
 
-    await user.save();
-    console.log('User updated:', user);
-    
-    res.json({ message: 'Profile updated successfully.' });
+      // Update avatar if provided and valid
+      if (req.body.avatar && avatarMap[req.body.avatar]) {
+          user.profile.avatar = avatarMap[req.body.avatar];
+      }
+
+      // Update username if provided
+      user.username = req.body.username || user.username;
+
+      await user.save();
+      console.log('User updated:', user);
+
+      res.json({ message: 'Profile updated successfully.' });
   } catch (err) {
-    console.error("Error during profile update:", err);
-    res.status(500).json({ message: 'Internal server error', error: err.message });
+      console.error("Error during profile update:", err);
+      res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 });
-
-
-
-
-
-
-
 
 module.exports = app;

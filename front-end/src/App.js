@@ -8,9 +8,8 @@ import Matches from './Matches';
 import Survey from './Survey';
 import Profile from './Profile'
 import EditProfile from './EditProfile';
-import Retake from './Retake'
+// import MyPreferences from './MyPreferences'
 import OtherProfile from './OtherProfile';
-import UserAnswers from './UserAnswers';
 import ProtectedRoute from './ProtectedRoute';
 import axios from 'axios'
 
@@ -22,15 +21,14 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginForm />} />
         <Route path="/register" element={<RegistrationForm />} />
-        <Route path="/chatpage/:username" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+        <Route path="/chatpage" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
         <Route path="/chatlist" element={<ProtectedRoute><ChatList /></ProtectedRoute>} />
         <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
-        <Route path="/survey" element={<ProtectedRoute><Survey /></ProtectedRoute>} />
+        <Route path="/survey" element={<ProtectedRoute><Survey /> </ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/editprofile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
-        <Route path="/retake" element={<ProtectedRoute><Retake /></ProtectedRoute>} />
+        {/* <Route path="/mypreferences" element={<ProtectedRoute><MyPreferences /></ProtectedRoute>} /> */}
         <Route path="/otheruser" element={<ProtectedRoute><OtherProfile /></ProtectedRoute>} />
-        <Route path="/useranswers" element={<ProtectedRoute><UserAnswers /></ProtectedRoute>} />
         {/* Redirect all other paths to "/login" */}
         <Route path="*" element={<Navigate replace to="/login" />} />
       </Routes>

@@ -3,77 +3,77 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Button from './Button';
-import profilePicture from './ProfilePic.png';
 import "./Profile.css";
-import { socket } from './sockets/ReactSocket';
+import defaultAvatar from './assets/defaultAvatar.png';  // Default avatar if none is set
+import dogAvatar from './assets/avatar1.png';
+import catAvatar from './assets/avatar2.png';
+import alligatorAvatar from './assets/avatar3.png';
+import owlAvatar from './assets/avatar4.png';
+import bunnyAvatar from './assets/avatar5.png';
 
 function Profile() {
-    const [profileData, setProfileData] = useState({});
-    const [year, setYear] = useState('');
-    const [username, setUsername] = useState(''); // Separate state for username
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
+  const [profileData, setProfileData] = useState({});
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
+  useEffect(() => {
     const fetchProfileData = async () => {
-        try {
-            const response = await axios.get('http://localhost:3001/profile', {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            console.log('Fetching profile data', response.data);
-            if (response.data && response.data.profile) {
-                setProfileData(response.data.profile); // Set the profile-specific data
-                setUsername(response.data.username); // Set username separately
-                setYear(response.data.answers.year)
-            } else {
-                throw new Error('Profile data is missing');
-            }
-        } catch (error) {
-            console.error('Error fetching profile data:', error);
-            setError('Error fetching profile data: ' + error.message);
-        }
+      try {
+        const response = await axios.get('http://localhost:3001/profile', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        setProfileData(response.data);
+      } catch (error) {
+        console.error('Error fetching profile data:', error);
+        setError('Error fetching profile data: ' + error.message);
+      }
     };
 
-    useEffect(() => {
-        fetchProfileData();
-    }, []);
+    fetchProfileData();
+  }, [navigate]);
 
-    const handleLogout = () => {
-        console.log("Logging out...");
-        localStorage.removeItem('token');
-        //socket.disconnect(); //disconnect the socket that was in use
-        navigate('/login', { replace: true });
-    };
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login', { replace: true });
+  };
 
-    if (!profileData || Object.keys(profileData).length === 0) {
-        return <p>Loading...</p>;
+  const getAvatarImage = (avatarName) => {
+    switch (avatarName) {
+      case 'avatar1.png': return dogAvatar;
+      case 'avatar2.png': return catAvatar;
+      case 'avatar3.png': return alligatorAvatar;
+      case 'avatar4.png': return owlAvatar;
+      case 'avatar5.png': return bunnyAvatar;
+      default: return defaultAvatar;
     }
+  };
 
+  if (!profileData || Object.keys(profileData).length === 0) {
+    return <p>Loading...</p>;
+  }
 
-    if (error) {
-        return <p>{error}</p>
-    }
+  if (error) {
+    return <p>{error}</p>;
+  }
 
-    return (
-        <>
-            <Header />
-            <div className="Profile">
-                <img src={profileData.imagePath || profilePicture} alt="Profile" />
-                <h2>{username || 'Username not set'}</h2>
-                <h4>{year || 'Year not set'}</h4>
-                <p className="AboutText">{profileData.bio || 'No bio available.'}</p>
-            </div>
-            <div className="Footer">
-                <Button text="Edit Profile" location="/editprofile" />
-                <Button text="Retake Survey" location="/retake" />
-            </div>
-            <br></br>
-            <div className='BottomFooter'>
-                <button onClick={handleLogout} className="logout-button">Logout</button>
-            </div>
-        </>
-    );
+  const avatarImage = profileData.profile && profileData.profile.avatar ? getAvatarImage(profileData.profile.avatar) : defaultAvatar;
+
+  return (
+    <>
+      <Header />
+      <div className="Profile">
+        <img src={avatarImage} alt="Profile Avatar" style={{ width: '150px', height: '150px' }} />
+        <h2>{profileData.username || 'Username not set'}</h2>
+        <p className="AboutText">{profileData.profile.bio || 'No bio available.'}</p>
+      </div>
+      <div className="Footer">
+        <Button text="Edit Profile" location="/editprofile" />
+        <button onClick={handleLogout} className="logout-button">Logout</button>
+      </div>
+    </>
+  );
 }
 
 export default Profile;
