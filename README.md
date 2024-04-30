@@ -1,7 +1,7 @@
 # NYU Roomate Finder
 
 ### Link to the Live Site:
-
+[Roomate Finder, Live App](http://167.99.54.107:3000/) 
 
 ###  Product Vision Statement:
 NYU Roomate Finder is a simple web app that easily connects students looking for roomates with similar preferences so that they can start looking for an apartment together.
