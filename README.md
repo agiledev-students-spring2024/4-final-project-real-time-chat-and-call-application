@@ -24,4 +24,4 @@ To contribute to this project, please see the [CONTRIBUTING.md](https://github.c
 
 ### Building & Testing
 To test run "npm test" on the back-end folder. \
-To run the project run "npm install" on the front-end and the back-end folder to make sure you have all the dependencies, then make sure you have put our .env file from our Discord channel in the back-end folder, finally run "npm start" on both the front-end and back-end folders. \
+To run the project run "npm install" on the front-end and the back-end folder to make sure you have all the dependencies. Next, download .env file from our Discord channel (you will have to ask us for this as this is private). Feel free to modify database (DSN) and IP (HOST) credentials, and drag it into the back-end folder. Finally run "npm start" on both the front-end and back-end folders to launch the app. \
